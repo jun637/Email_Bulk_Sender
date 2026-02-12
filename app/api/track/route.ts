@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { after } from "next/server";
 import { google } from "googleapis";
 import { getOAuthClient } from "@/lib/auth";
 import { getTrackingData, markOpened } from "@/lib/tracking";
@@ -14,10 +15,13 @@ export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id");
 
   if (id) {
-    // Fire-and-forget: update tracking data in background
-    handleTracking(id).catch((err) =>
-      console.error("Tracking error:", err)
-    );
+    after(async () => {
+      try {
+        await handleTracking(id);
+      } catch (err) {
+        console.error("Tracking error:", err);
+      }
+    });
   }
 
   return new Response(PIXEL, {
