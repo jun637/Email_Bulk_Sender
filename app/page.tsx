@@ -29,7 +29,10 @@ export default function Home() {
               Gmail Bulk Sender
             </h1>
           </div>
-          <AuthButton />
+          <div className="flex items-center gap-2">
+            <Guide />
+            <AuthButton />
+          </div>
         </div>
       </header>
 
@@ -49,7 +52,6 @@ export default function Home() {
         )}
 
         <div className="space-y-6">
-          <Guide />
           <DraftSelector />
           <SheetsInput />
           <VariableMapper />
