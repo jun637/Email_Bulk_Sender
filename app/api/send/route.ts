@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
               });
               const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
               const pixelUrl = `${baseUrl}/api/track?id=${trackId}`;
-              finalHtml += `<img src="${pixelUrl}" width="1" height="1" style="display:none" alt="" />`;
+              finalHtml += `<img src="${pixelUrl}" width="1" height="1" style="opacity:0;width:1px;height:1px" alt="" />`;
             } catch (err) {
               console.error("Failed to create tracking pixel:", err);
             }
