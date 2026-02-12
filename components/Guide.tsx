@@ -173,9 +173,9 @@ export default function Guide() {
               <section className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-2">
                 <h3 className="font-semibold text-amber-900">주의사항</h3>
                 <ul className="text-sm text-amber-800 space-y-1.5 list-disc list-inside">
-                  <li>일일 발송 한도: Google Workspace 기준 2,000통/일</li>
+                  <li>일일 발송 한도: 1개 Google 계정 기준 500통/일</li>
                   <li>열람 추적은 100% 정확하지 않습니다 (일부 메일 클라이언트의 이미지 차단 등)</li>
-                  <li>대량 발송 시 수신자 수에 따라 시간이 소요됩니다 (100명 약 2분)</li>
+                  <li>서버 안정성을 위해 한 번에 50명 이내로 발송하는 것을 권장합니다. 예를 들어 400명에게 보내야 한다면 50명씩 8회에 나눠 발송해 주세요.</li>
                 </ul>
               </section>
             </div>
