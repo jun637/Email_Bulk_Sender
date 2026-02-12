@@ -47,6 +47,12 @@ export async function getSheetData(
   return { headers, rows };
 }
 
+// Background colors for MERGE_STATUS values
+const STATUS_COLORS: Record<string, { red: number; green: number; blue: number }> = {
+  EMAIL_SENT: { red: 0.85, green: 0.85, blue: 0.85 },       // 회색
+  EMAIL_OPENED: { red: 0.72, green: 0.88, blue: 0.53 },     // 연두색
+};
+
 /**
  * Update a single cell in a sheet.
  */
@@ -62,12 +68,49 @@ export async function updateSheetCell(
   const colLetter = columnToLetter(colIndex);
   const cellRow = rowIndex + 2; // +1 for header, +1 for 1-based
   const range = `'${sheetTitle}'!${colLetter}${cellRow}`;
+
+  // Update cell value
   await sheets.spreadsheets.values.update({
     spreadsheetId,
     range,
     valueInputOption: "RAW",
     requestBody: { values: [[value]] },
   });
+
+  // Apply background color if status has a color defined
+  const color = STATUS_COLORS[value];
+  if (color) {
+    const sheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
+    const sheet = sheetInfo.data.sheets?.find(
+      (s) => s.properties?.title === sheetTitle
+    );
+    if (!sheet?.properties?.sheetId && sheet?.properties?.sheetId !== 0) return;
+
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId,
+      requestBody: {
+        requests: [
+          {
+            repeatCell: {
+              range: {
+                sheetId: sheet.properties.sheetId,
+                startRowIndex: cellRow - 1,
+                endRowIndex: cellRow,
+                startColumnIndex: colIndex,
+                endColumnIndex: colIndex + 1,
+              },
+              cell: {
+                userEnteredFormat: {
+                  backgroundColor: color,
+                },
+              },
+              fields: "userEnteredFormat.backgroundColor",
+            },
+          },
+        ],
+      },
+    });
+  }
 }
 
 /**
