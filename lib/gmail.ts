@@ -160,6 +160,12 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
     ? `=?UTF-8?B?${Buffer.from(fromName).toString("base64")}?= <${email}>`
     : email;
 
+  // RFC 2822 date format
+  const date = new Date().toUTCString().replace("GMT", "+0000");
+  // Unique Message-ID using sender's domain
+  const domain = email.split("@")[1] || "gmail.com";
+  const messageId = `<${crypto.randomUUID()}@${domain}>`;
+
   const commonHeaders = [
     `From: ${fromHeader}`,
     `To: ${to}`,
@@ -167,6 +173,10 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
     ...(bcc ? [`Bcc: ${bcc}`] : []),
     `Subject: =?UTF-8?B?${Buffer.from(subject).toString("base64")}?=`,
     "MIME-Version: 1.0",
+    `Date: ${date}`,
+    `Message-ID: ${messageId}`,
+    `Reply-To: ${fromHeader}`,
+    `List-Unsubscribe: <mailto:${email}?subject=Unsubscribe>`,
   ];
 
   let rawMessage: string;

@@ -40,10 +40,14 @@ interface AppState {
   cc: string;
   bcc: string;
   trackOpens: boolean;
+  batchSize: number;
+  emailDelay: number;
   setFromName: (name: string) => void;
   setCc: (cc: string) => void;
   setBcc: (bcc: string) => void;
   setTrackOpens: (track: boolean) => void;
+  setBatchSize: (size: number) => void;
+  setEmailDelay: (delay: number) => void;
 
   // Sending
   isSending: boolean;
@@ -93,10 +97,14 @@ export const useStore = create<AppState>((set) => ({
   cc: "",
   bcc: "",
   trackOpens: true,
+  batchSize: 50,
+  emailDelay: 2,
   setFromName: (fromName) => set({ fromName }),
   setCc: (cc) => set({ cc }),
   setBcc: (bcc) => set({ bcc }),
   setTrackOpens: (trackOpens) => set({ trackOpens }),
+  setBatchSize: (batchSize) => set({ batchSize }),
+  setEmailDelay: (emailDelay) => set({ emailDelay }),
 
   // Sending
   isSending: false,
@@ -121,6 +129,8 @@ export const useStore = create<AppState>((set) => ({
       cc: "",
       bcc: "",
       trackOpens: true,
+      batchSize: 50,
+      emailDelay: 2,
       isSending: false,
       sendProgress: null,
     }),

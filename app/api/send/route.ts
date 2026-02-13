@@ -24,7 +24,13 @@ export async function POST(req: NextRequest) {
     bcc,
     mergeStatusColumn,
     trackOpens,
+    batchSize,
+    emailDelay,
   } = options;
+
+  const BATCH_SIZE = batchSize || 50;
+  const EMAIL_DELAY = (emailDelay || 2) * 1000; // to ms
+  const BATCH_PAUSE = 30_000; // 30 seconds between batches
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -131,22 +137,60 @@ export async function POST(req: NextRequest) {
           let finalHtml = replaceVariables(templateHtml, values);
           const finalSubject = replaceVariables(templateSubject, values);
 
-          // Add tracking pixel if enabled
+          // Open tracking: replace an existing image src with tracking URL
+          let emailInlineImages = inlineImages;
           if (trackOpens) {
             try {
-              const trackId = await createTrackingPixel({
-                email,
-                spreadsheetId,
-                sheetTitle,
-                rowIndex: i,
-                mergeStatusColumn,
-                refreshToken,
-              });
               const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-              const pixelUrl = `${baseUrl}/api/track?id=${trackId}`;
-              finalHtml += `<img src="${pixelUrl}" width="1" height="1" style="opacity:0;width:1px;height:1px" alt="" />`;
+
+              // Find the last CID image in the HTML (typically the signature logo)
+              const cidPattern = /src=["']cid:([^"']+)["']/gi;
+              let lastCidMatch: RegExpExecArray | null = null;
+              let m: RegExpExecArray | null;
+              while ((m = cidPattern.exec(finalHtml)) !== null) {
+                lastCidMatch = m;
+              }
+
+              if (lastCidMatch && inlineImages) {
+                // Use existing image for tracking
+                const cid = lastCidMatch[1];
+                const targetImage = inlineImages.find(
+                  (img) => img.contentId === cid
+                );
+
+                const trackId = await createTrackingPixel({
+                  email,
+                  spreadsheetId,
+                  sheetTitle,
+                  rowIndex: i,
+                  mergeStatusColumn,
+                  refreshToken,
+                  imageData: targetImage?.data,
+                  imageMimeType: targetImage?.mimeType,
+                });
+
+                const trackUrl = `${baseUrl}/api/i/${trackId}`;
+                finalHtml = finalHtml.replace(`cid:${cid}`, trackUrl);
+
+                // Filter out the replaced image from MIME attachments
+                emailInlineImages = inlineImages.filter(
+                  (img) => img.contentId !== cid
+                );
+              } else {
+                // No CID images — fall back to appended pixel
+                const trackId = await createTrackingPixel({
+                  email,
+                  spreadsheetId,
+                  sheetTitle,
+                  rowIndex: i,
+                  mergeStatusColumn,
+                  refreshToken,
+                });
+                const trackUrl = `${baseUrl}/api/i/${trackId}`;
+                finalHtml += `<img src="${trackUrl}" width="1" height="1" style="opacity:0;width:1px;height:1px" alt="" />`;
+              }
             } catch (err) {
-              console.error("Failed to create tracking pixel:", err);
+              console.error("Failed to create tracking:", err);
             }
           }
 
@@ -159,7 +203,7 @@ export async function POST(req: NextRequest) {
               fromName,
               cc,
               bcc,
-              inlineImages,
+              inlineImages: emailInlineImages,
             });
 
             sent++;
@@ -194,9 +238,26 @@ export async function POST(req: NextRequest) {
             errors,
           });
 
-          // Rate limit: ~1 email per second to avoid Gmail API limits
+          // Rate limit between emails
           if (i < rows.length - 1) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            const emailsSentInBatch = (i + 1) % BATCH_SIZE;
+
+            if (emailsSentInBatch === 0) {
+              // Batch complete — pause before next batch
+              const currentBatch = Math.floor((i + 1) / BATCH_SIZE);
+              const totalBatches = Math.ceil(rows.length / BATCH_SIZE);
+              send({
+                total,
+                sent,
+                failed,
+                currentEmail: `배치 ${currentBatch}/${totalBatches} 완료, ${BATCH_PAUSE / 1000}초 대기 중...`,
+                status: "batch_pause",
+                errors,
+              });
+              await new Promise((resolve) => setTimeout(resolve, BATCH_PAUSE));
+            } else {
+              await new Promise((resolve) => setTimeout(resolve, EMAIL_DELAY));
+            }
           }
         }
 

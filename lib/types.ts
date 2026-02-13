@@ -51,6 +51,8 @@ export interface SendOptions {
   bcc?: string;
   mergeStatusColumn: string;
   trackOpens: boolean;
+  batchSize: number;   // emails per batch (0 = unlimited)
+  emailDelay: number;  // seconds between each email
 }
 
 export interface SendProgress {
@@ -58,7 +60,7 @@ export interface SendProgress {
   sent: number;
   failed: number;
   currentEmail: string;
-  status: "sending" | "done" | "error";
+  status: "sending" | "done" | "error" | "batch_pause";
   errors: { email: string; error: string }[];
 }
 
@@ -72,6 +74,8 @@ export interface TrackingMetadata {
   mergeStatusColumn: string;
   refreshToken: string;
   openedAt?: string;
+  imageData?: string;     // base64 encoded image to serve
+  imageMimeType?: string; // e.g. "image/png"
 }
 
 // === Auth Types ===

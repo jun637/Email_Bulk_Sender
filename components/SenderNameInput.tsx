@@ -14,10 +14,14 @@ export default function SenderNameInput() {
     cc,
     bcc,
     trackOpens,
+    batchSize,
+    emailDelay,
     setFromName,
     setCc,
     setBcc,
     setTrackOpens,
+    setBatchSize,
+    setEmailDelay,
   } = useStore();
 
   if (!selectedDraft || !sheetData) return null;
@@ -66,6 +70,38 @@ export default function SenderNameInput() {
               value={bcc}
               onChange={(e) => setBcc(e.target.value)}
             />
+          </div>
+        </div>
+
+        <Separator />
+
+        <div>
+          <p className="text-sm font-medium mb-3">발송 속도 제한</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="batch-size" className="text-sm text-muted-foreground">배치 크기 (통)</Label>
+              <Input
+                id="batch-size"
+                type="number"
+                min={10}
+                max={500}
+                value={batchSize}
+                onChange={(e) => setBatchSize(Math.max(10, Math.min(500, Number(e.target.value) || 50)))}
+              />
+              <p className="text-xs text-muted-foreground">한 배치당 발송 수. 배치 사이 30초 대기.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email-delay" className="text-sm text-muted-foreground">이메일 간격 (초)</Label>
+              <Input
+                id="email-delay"
+                type="number"
+                min={1}
+                max={10}
+                value={emailDelay}
+                onChange={(e) => setEmailDelay(Math.max(1, Math.min(10, Number(e.target.value) || 2)))}
+              />
+              <p className="text-xs text-muted-foreground">각 이메일 사이 대기 시간</p>
+            </div>
           </div>
         </div>
 

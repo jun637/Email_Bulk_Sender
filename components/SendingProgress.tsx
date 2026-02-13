@@ -23,6 +23,8 @@ export default function SendingProgress() {
     cc,
     bcc,
     trackOpens,
+    batchSize,
+    emailDelay,
     isSending,
     sendProgress,
     setIsSending,
@@ -58,6 +60,8 @@ export default function SendingProgress() {
           bcc: bcc || undefined,
           mergeStatusColumn,
           trackOpens,
+          batchSize,
+          emailDelay,
         }),
       });
 
@@ -119,6 +123,8 @@ export default function SendingProgress() {
     bcc,
     mergeStatusColumn,
     trackOpens,
+    batchSize,
+    emailDelay,
     setIsSending,
     setSendProgress,
   ]);
@@ -223,7 +229,18 @@ export default function SendingProgress() {
               )}
             </div>
 
-            {isSending && progress?.currentEmail && (
+            {isSending && progress?.status === "batch_pause" && (
+              <div className="flex items-center gap-2 text-sm text-amber-600">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="10" x2="10" y1="15" y2="9"/>
+                  <line x1="14" x2="14" y1="15" y2="9"/>
+                </svg>
+                {progress.currentEmail}
+              </div>
+            )}
+
+            {isSending && progress?.status === "sending" && progress?.currentEmail && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <svg className="animate-spin h-3.5 w-3.5 text-primary" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
